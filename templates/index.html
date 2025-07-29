@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Welcome to Silvyr</title>
+</head>
+
+<body>
+    <h1>Hello, Silvyr World!</h1>
+    <p>This is your first HTML page served by Flask.</p>
+
+    <a href="/about">About</a>
+
+    <hr>
+
+    <h2>Chat Box</h2>
+    <form method="POST">
+        <input type="text" name="message" placeholder="Type your message..." required>
+        <button type="submit">Send</button>
+    </form>
+
+    {% if message %}
+    <p><strong>You said:</strong> {{ message }}</p>
+    {% endif %}
+</body>
+
+</html>
