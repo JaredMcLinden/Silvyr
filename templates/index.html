@@ -1,27 +1,56 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <title>Welcome to Silvyr</title>
+    <meta charset="UTF-8">
+    <title>Silvyr Chat</title>
 </head>
 
 <body>
-    <h1>Hello, Silvyr World!</h1>
-    <p>This is your first HTML page served by Flask.</p>
-
-    <a href="/about">About</a>
-
-    <hr>
-
-    <h2>Chat Box</h2>
-    <form method="POST">
-        <input type="text" name="message" placeholder="Type your message..." required>
+    <h1>Talk to Silvyr</h1>
+    <div id="chat-box" style="margin-bottom: 1em; border: 1px solid #ccc; padding: 10px;"></div>
+    <form id="chat-form">
+        <input type="text" id="user-input" placeholder="Type your message..." required>
         <button type="submit">Send</button>
     </form>
 
-    {% if message %}
-    <p><strong>You said:</strong> {{ message }}</p>
-    {% endif %}
+    <script>
+        const chatForm = document.getElementById("chat-form");
+        const chatBox = document.getElementById("chat-box");
+
+        chatForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const input = document.getElementById("user-input");
+            const userMessage = input.value.trim();
+            if (!userMessage) return;
+
+            // Show user's message
+            const userDiv = document.createElement("div");
+            userDiv.textContent = "You: " + userMessage;
+            chatBox.appendChild(userDiv);
+            input.value = "";
+
+            try {
+                const response = await fetch("/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: userMessage })
+                });
+
+                const data = await response.json();
+
+                const aiDiv = document.createElement("div");
+                aiDiv.textContent = "Silvyr: " + data.response;
+                chatBox.appendChild(aiDiv);
+            } catch (error) {
+                const errorDiv = document.createElement("div");
+                errorDiv.textContent = "❌ Error: Failed to get a response.";
+                chatBox.appendChild(errorDiv);
+                console.error("Error:", error);
+            }
+        });
+    </script>
 </body>
 
 </html>
