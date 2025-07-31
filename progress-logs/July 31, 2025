@@ -1,0 +1,5 @@
+- System prompt now defines: role, expertise, vision, tone, boundaries.
+- Assistant now refuses off-topic queries and redirects with gentle focus.
+- Removed rigid labels like "Tone:" and used natural, integrated guidance instead.
+- Identity feels stable, grounded, and responsive to health-oriented dialogue.
+
