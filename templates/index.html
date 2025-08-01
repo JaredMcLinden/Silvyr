@@ -2,17 +2,152 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Silvyr Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', sans-serif;
+            background-color: #898080;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .header {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+        }
+
+        .hydration-tracker {
+            position: absolute;
+            top: 40px;
+            left: 40px;
+            text-align: center;
+        }
+
+        .bottle-container {
+            width: 60px;
+            height: 200px;
+            border: 3px solid #3b82f6;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            background: #fff;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+
+        .water-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background-color: #3b82f6;
+            height: 0%;
+            transition: height 0.3s ease;
+            pointer-events: none;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            background-color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #chat-box {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 400px;
+            margin-bottom: 15px;
+            padding-right: 5px;
+        }
+
+        #chat-box div {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        #chat-box .user {
+            background-color: #dbeafe;
+            align-self: flex-end;
+        }
+
+        #chat-box .ai {
+            background-color: #e2e8f0;
+            align-self: flex-start;
+        }
+
+        form {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            background-color: #3b82f6;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #2563eb;
+        }
+    </style>
 </head>
 
 <body>
-    <h1>Talk to Silvyr</h1>
-    <div id="chat-box" style="margin-bottom: 1em; border: 1px solid #ccc; padding: 10px;"></div>
-    <form id="chat-form">
-        <input type="text" id="user-input" placeholder="Type your message..." required>
-        <button type="submit">Send</button>
-    </form>
+    <div class="header">
+        <img src="{{ url_for('static', filename='SilvyrAI Logo.jpg') }}" alt="Silvyr Logo" class="logo">
+    </div>
+
+    <div class="hydration-tracker">
+        <div class="bottle-container" id="bottle">
+            <div class="water-fill" id="water-fill"></div>
+        </div>
+        <p id="water-text">0 oz / 64 oz</p>
+    </div>
+
+    <div class="chat-container">
+        <h1>Talk to Silvyr</h1>
+        <div id="chat-box"></div>
+        <form id="chat-form">
+            <input type="text" id="user-input" placeholder="Type your message..." required />
+            <button type="submit">Send</button>
+        </form>
+    </div>
 
     <script>
         const chatForm = document.getElementById("chat-form");
@@ -25,9 +160,9 @@
             const userMessage = input.value.trim();
             if (!userMessage) return;
 
-            // Show user's message
             const userDiv = document.createElement("div");
-            userDiv.textContent = "You: " + userMessage;
+            userDiv.textContent = userMessage;
+            userDiv.className = "user";
             chatBox.appendChild(userDiv);
             input.value = "";
 
@@ -41,14 +176,62 @@
                 const data = await response.json();
 
                 const aiDiv = document.createElement("div");
-                aiDiv.textContent = "Silvyr: " + data.response;
+                aiDiv.textContent = data.response;
+                aiDiv.className = "ai";
                 chatBox.appendChild(aiDiv);
+                chatBox.scrollTop = chatBox.scrollHeight;
             } catch (error) {
                 const errorDiv = document.createElement("div");
-                errorDiv.textContent = "❌ Error: Failed to get a response.";
+                errorDiv.textContent = "Error: Failed to get a response.";
                 chatBox.appendChild(errorDiv);
-                console.error("Error:", error);
             }
+        });
+
+        let isDragging = false;
+
+        const container = document.querySelector('.bottle-container');
+        const fill = container.querySelector('.water-fill');
+        const waterText = document.getElementById('water-text');
+        const totalOz = 64;
+
+        function setFillFromY(y) {
+            const rect = container.getBoundingClientRect();
+            const height = rect.height;
+            const percentage = Math.min(Math.max(((rect.bottom - y) / height) * 100, 0), 100);
+            fill.style.height = `${percentage}%`;
+            const currentOz = Math.round((percentage / 100) * totalOz);
+            waterText.innerText = `${currentOz} oz / ${totalOz} oz`;
+        }
+
+        container.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            setFillFromY(e.clientY);
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                setFillFromY(e.clientY);
+            }
+        });
+
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+
+        // Optional: Mobile support
+        container.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            setFillFromY(e.touches[0].clientY);
+        });
+
+        window.addEventListener('touchmove', (e) => {
+            if (isDragging) {
+                setFillFromY(e.touches[0].clientY);
+            }
+        });
+
+        window.addEventListener('touchend', () => {
+            isDragging = false;
         });
     </script>
 </body>
